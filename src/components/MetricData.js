@@ -6,7 +6,7 @@ import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
 import CardStats from './CardStats';
 import MultiSelect from './MultiSelect';
-import { width } from '@material-ui/system';
+import Chart from './Charts';
 import * as actions from '../store/actions';
 
 const useStyles = makeStyles((theme) => ({
@@ -95,6 +95,32 @@ const useStyles = makeStyles((theme) => ({
    return getMetrics;
   };
   
+  const FetchMultipleMeasurements = () => {
+    console.log("FetchMultipleMeasurements");
+    const dispatch = useDispatch();
+    let [result] = useQuery({
+      query: query_multiple_measurements,
+      variable: []
+    });
+    const { data, error, fetching } = result;
+    useEffect(() => {
+      if (error) {
+        dispatch({ type: actions.MULTIPLE_MEASUREMENTS_API_CALL_FAIL, error });
+      }
+      if (!data) {
+        return;
+      }
+      if (fetching) {
+        return;
+      }
+      const getMultipleMeasurements = data;
+      console.log(getMultipleMeasurements);
+      dispatch({
+        type: actions.METRICS_MEASUREMENTS_RECEIVED,
+        getMultipleMeasurements
+      });
+    }, [dispatch, data, error, fetching]);
+  };
 
 const MetricData = () => {
     const classes = useStyles();
@@ -103,6 +129,7 @@ const MetricData = () => {
       value: []
     });
     FetchMetricList()
+    FetchMultipleMeasurements()
     const getMetrics = useSelector(getMetric);
     
     if (getMetrics.length === 0)
@@ -122,28 +149,15 @@ const MetricData = () => {
                 </Grid>
             </Grid>
             <Grid container spacing={1}>
-                <Grid item xs={2} className={classes.item}>
-                    <CardStats />
-                </Grid>
-                <Grid item xs={2}>
-                    <CardStats />
-                </Grid>
-                <Grid item xs={2}>
-                    <CardStats />
-                </Grid>
-                <Grid item xs={2}>
-                    <CardStats />
-                </Grid>
-                <Grid item xs={2}>
-                    <CardStats />
-                </Grid>
-                <Grid item xs={2}>
-                    <CardStats />
-                </Grid>
+                {state.value.length > 0 && state.value.map((data, i) => <Grid item xs={2}> <CardStats value={data} /> </Grid>)}
             </Grid>
             <Grid container spacing={1}>
                 <Grid item xs={12}>
-                    <Paper className={classes.charContainer}> Drop Down </Paper>
+                  {state.value.length > 0 && 
+                    <Paper className={classes.charContainer}>
+                      <Chart command={state} />
+                    </Paper>
+                  }
                 </Grid>
             </Grid>
         </div>
