@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React from 'react';
 import { makeStyles, useTheme } from '@material-ui/core/styles';
 import Input from '@material-ui/core/Input';
 import InputLabel from '@material-ui/core/InputLabel';
@@ -61,16 +61,11 @@ const useStyles = makeStyles((theme) => ({
     };
   }
 
-const MultiSelect = () => {
+const MultiSelect = ({ getMetrics, handleSelectionChange, values }) => {
 
     const classes = useStyles();
     const theme = useTheme();
-    const [personName, setPersonName] = useState([]);
-  
-    const handleChange = (event) => {
-      setPersonName(event.target.value);
-    };
-
+    
     return (
         <div>
             <FormControl className={classes.formControl}>
@@ -79,8 +74,8 @@ const MultiSelect = () => {
                     labelId="mutiple-chip-label"
                     id="mutiple-chip"
                     multiple
-                    value={personName}
-                    onChange={handleChange}
+                    value={values}
+                    onChange={handleSelectionChange}
                     input={<Input id="select-multiple-chip" />}
                     renderValue={(selected) => (
                         <div className={classes.chips}>
@@ -91,8 +86,8 @@ const MultiSelect = () => {
                     )}
                     MenuProps={MenuProps}
                 >
-                    {names.map((name) => (
-                        <MenuItem key={name} value={name} style={getStyles(name, personName, theme)}>
+                    {getMetrics.map((name) => (
+                        <MenuItem key={name} value={name} style={getStyles(name, values, theme)}>
                             {name}
                         </MenuItem>
                     ))}
