@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, { useEffect } from 'react';
 import { useQuery, useSubscription } from 'urql';
 import { useDispatch, useSelector } from 'react-redux';
 import { makeStyles } from '@material-ui/core/styles';
@@ -7,161 +7,162 @@ import Paper from '@material-ui/core/Paper';
 import CardStats from './CardStats';
 import MultiSelect from './MultiSelect';
 import Chart from './Charts';
+import { query_metric, query_multiple_measurements, metric_Subscription_Query } from '../utils/queries';
 import * as actions from '../store/actions';
 
-const useStyles = makeStyles((theme) => ({
-    root: {
-      flexGrow: 1,
-      margin: '10px'
-    },
-    paper: {
-       padding: '0 10px 10px',
-      color: theme.palette.text.secondary,
-      float: 'right',
-      width: '30%',
-      marginBottom: '10px'
+const useStyles = makeStyles(theme => ({
+  root: {
+    flexGrow: 1,
+    margin: '10px',
+  },
+  paper: {
+    padding: '0 10px 10px',
+    color: theme.palette.text.secondary,
+    width: '45%',
+    marginBottom: '10px',
+  },
+  chartContainer: {
+    padding: '10px',
+    color: theme.palette.text.secondary,
+    height: '100%',
+  },
+  cardContainer: {
+    marginBottom: '10px',
+  },
+  item: {
+    marginBottom: '10px',
+  },
+}));
 
-    },
-    charContainer: {
-        padding: '10px',
-        color: theme.palette.text.secondary,
-        height: '100%'
-    },
-    item: {
-        marginBottom: '10px'
+const FetchMetricList = () => {
+  let query = query_metric;
+  const dispatch = useDispatch();
+  let [result] = useQuery({
+    query,
+    variables: {},
+  });
+  const { fetching, data, error } = result;
+
+  useEffect(() => {
+    if (error) {
+      dispatch({ type: actions.GET_METRIC_LIST_API_FAIL, error });
     }
-  }));
-
-  const current_time = new Date().valueOf();
-  const query_metric = `
-      query {
-          getMetrics
-      }`;
-  
-  const query_multiple_measurements = `
-  query($input: [MeasurementQuery] = [
-    {metricName: "tubingPressure", after: ${current_time -
-      1800000}, before: ${current_time}},
-    {metricName: "casingPressure", after: ${current_time -
-      1800000}, before: ${current_time}},
-    {metricName: "oilTemp", after: ${current_time -
-      1800000}, before: ${current_time}},
-    {metricName: "flareTemp", after: ${current_time -
-      1800000}, before: ${current_time}},
-    {metricName: "waterTemp", after: ${current_time -
-      1800000}, before: ${current_time}},
-    {metricName: "injValveOpen", after: ${current_time -
-      1800000}, before: ${current_time}}
-  ]
-  ){
-    getMultipleMeasurements(input: $input) {
-      metric
-      measurements {
-       at
-       value
-       metric
-       unit
-      }
+    if (!data) {
+      return;
     }
-  }`;
+    if (fetching) {
+      return;
+    }
 
-  const FetchMetricList = () => {
-    let query = query_metric;
-    const dispatch = useDispatch();
-    let [result] = useQuery({
-      query,
-      variables: {}
-    });
-    const { fetching, data, error } = result;
+    dispatch({ type: actions.GET_METRIC_LIST_RESPONSE, getMetrics: data.getMetrics });
+  }, [dispatch, data, error, fetching]);
+};
 
-    // similar to component did mount, the useEffect gets calle 
-    useEffect(() => {
-      if (error) {
-        dispatch({ type: actions.METRIC_API_CALL_FAIL, error });
-      }
-      if (!data) {
-        return;
-      }
-      if (fetching) {
-        return;
-      }
-      
-      dispatch({ type: actions.METRICS_DATA_RECEIVED, getMetrics: data.getMetrics });
-    }, [dispatch, data, error, fetching]);
-  };
-  
-  const getMetric = state => {
-    const getMetrics = state.metricFields.getMetrics;
-   return getMetrics;
-  };
-  
-  const FetchMultipleMeasurements = () => {
-    console.log("FetchMultipleMeasurements");
-    const dispatch = useDispatch();
-    let [result] = useQuery({
-      query: query_multiple_measurements,
-      variable: []
+const getMetric = state => {
+  const getMetrics = state.metricFields.getMetrics;
+  return getMetrics;
+};
+
+const FetchMultipleMeasurements = () => {
+  const dispatch = useDispatch();
+  let [result] = useQuery({
+    query: query_multiple_measurements,
+    variable: [],
+  });
+  const { data, error, fetching } = result;
+  useEffect(() => {
+    if (error) {
+      dispatch({ type: actions.GET_MEASUREMENTS_API_CALL_FAIL, error });
+    }
+    if (!data) {
+      return;
+    }
+    if (fetching) {
+      return;
+    }
+    const getMultipleMeasurements = data;
+
+    dispatch({
+      type: actions.GET_METRICS_MEASUREMENTS_RESPONSE,
+      getMultipleMeasurements,
     });
-    const { data, error, fetching } = result;
-    useEffect(() => {
-      if (error) {
-        dispatch({ type: actions.MULTIPLE_MEASUREMENTS_API_CALL_FAIL, error });
-      }
-      if (!data) {
-        return;
-      }
-      if (fetching) {
-        return;
-      }
-      const getMultipleMeasurements = data;
-      console.log(getMultipleMeasurements);
+  }, [dispatch, data, error, fetching]);
+};
+
+const FetchNewMeasurementData = state => {
+  const dispatch = useDispatch();
+  const [result] = useSubscription({
+    query: metric_Subscription_Query,
+    variables: {},
+  });
+  const { data, error } = result;
+  useEffect(() => {
+    if (error) {
+      dispatch({ type: actions.UPDATE_MEASUREMENTS_API_CALL_FAIL, error });
+    }
+    if (!data) {
+      return;
+    }
+    const newMeasurementData = data;
+    if (state.switch === true)
       dispatch({
-        type: actions.METRICS_MEASUREMENTS_RECEIVED,
-        getMultipleMeasurements
+        type: actions.UPDATE_METRIC_MEASUREMENTS_RESPONSE,
+        newMeasurementData,
       });
-    }, [dispatch, data, error, fetching]);
-  };
+  }, [data, error, dispatch, state]);
+};
 
 const MetricData = () => {
-    const classes = useStyles();
-    const [state, setState] = React.useState({
-      switch: true,
-      value: []
-    });
-    FetchMetricList()
-    FetchMultipleMeasurements()
-    const getMetrics = useSelector(getMetric);
-    
-    if (getMetrics.length === 0)
-    return (
-      <div>Loading</div>
-    );
+  const classes = useStyles();
+  const [state, setState] = React.useState({
+    switch: true,
+    value: [],
+  });
+  FetchMetricList();
+  FetchMultipleMeasurements();
+  FetchNewMeasurementData(state);
+  const getMetrics = useSelector(getMetric);
 
-    const handleSelectionChange = (event) => {
-      setState({ ...state, value: event.target.value });
-    };
+  if (getMetrics.length === 0) return <div>Loading</div>;
 
-    return(
-        <div className={classes.root}>
-            <Grid container spacing={1}>
-                <Grid item xs={12}>
-                    <Paper className={classes.paper}> <MultiSelect getMetrics={getMetrics} handleSelectionChange={handleSelectionChange} values={state.value}/> </Paper>
-                </Grid>
+  const handleSelectionChange = event => {
+    setState({ ...state, value: event.target.value });
+  };
+
+  return (
+    <div className={classes.root}>
+      <Grid container spacing={1}>
+        <Grid item xs={12}>
+          <Paper className={classes.paper}>
+            {' '}
+            <MultiSelect
+              getMetrics={getMetrics}
+              handleSelectionChange={handleSelectionChange}
+              values={state.value}
+            />{' '}
+          </Paper>
+        </Grid>
+      </Grid>
+      <Grid container spacing={1} className={classes.cardContainer}>
+        {state.value.length > 0 &&
+          state.value.map((data, i) => (
+            <Grid item xs={2}>
+              {' '}
+              <CardStats value={data} index={i} />{' '}
             </Grid>
-            <Grid container spacing={1}>
-                {state.value.length > 0 && state.value.map((data, i) => <Grid item xs={2}> <CardStats value={data} /> </Grid>)}
-            </Grid>
-            <Grid container spacing={1}>
-                <Grid item xs={12}>
-                  {state.value.length > 0 && 
-                    <Paper className={classes.charContainer}>
-                      <Chart command={state} />
-                    </Paper>
-                  }
-                </Grid>
-            </Grid>
-        </div>
-    )
-}
+          ))}
+      </Grid>
+      <Grid container spacing={1}>
+        <Grid item xs={12}>
+          {state.value.length > 0 && (
+            <Paper className={classes.chartContainer}>
+              <Chart command={state} />
+            </Paper>
+          )}
+        </Grid>
+      </Grid>
+    </div>
+  );
+};
 
 export default MetricData;
