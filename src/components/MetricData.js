@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useQuery, useSubscription } from 'urql';
 import { useDispatch, useSelector } from 'react-redux';
 import { makeStyles } from '@material-ui/core/styles';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
 import CardStats from './CardStats';
@@ -31,6 +32,11 @@ const useStyles = makeStyles(theme => ({
   },
   item: {
     marginBottom: '10px',
+  },
+  circularProgress: {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
   },
 }));
 
@@ -123,7 +129,12 @@ const MetricData = () => {
   FetchNewMeasurementData(state);
   const getMetrics = useSelector(getMetric);
 
-  if (getMetrics.length === 0) return <div>Loading</div>;
+  if (getMetrics.length === 0)
+    return (
+      <div className={classes.circularProgress}>
+        <CircularProgress />
+      </div>
+    );
 
   const handleSelectionChange = event => {
     setState({ ...state, value: event.target.value });

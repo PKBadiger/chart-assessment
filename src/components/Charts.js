@@ -9,7 +9,6 @@ const formatXAxis = tickItem => moment(parseInt(tickItem)).format('LT');
 
 const getMultipleMeasurement = state => state.metricMeasurements.getMultipleMeasurements;
 
-
 const formatDataToChartFormat = getMultipleMeasurements => {
   let data = getMultipleMeasurements.getMultipleMeasurements;
   if (data.length === 0) {
